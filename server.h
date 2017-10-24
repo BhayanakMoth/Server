@@ -4,9 +4,11 @@
 #include <QApplication>
 #include<WinSock2.h>
 #include<iostream>
+#include<QThread>
 struct Client
 {
     SOCKET socket;
+    bool isOccupied = false;
 };
 
 class Server
@@ -16,8 +18,16 @@ class Server
    Server(std::string ip,int PORT);
    void Connect();
 private:
-   static void ClientConnectionThread();
-   static void ClientConnectionHandler();
+   class ClientConnectionThread: public QThread
+   {
+     public:
+       ClientConnectionThread();
+       void run();
+   };
+
+private:
+  void CreateThreads(int ID);
+   static void ClientHandlerThread(int ID);
    void ProcessMessage(int len,int ID);
   private:
     SOCKET sListen;
@@ -30,6 +40,7 @@ private:
     int vacancy = 10;
     int lastVacantIndex = 10;
     int firstVacantID = 0;
+    ClientConnectionThread connection;
 };
 static Server * serverPtr;
 #endif // SERVER_H

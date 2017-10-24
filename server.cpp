@@ -23,9 +23,14 @@ void Server::Connect()
 
     QString debug = "Listener socket has been binded to SockAddr and it is listening.\n";
     window.WriteToServerArea(debug);
-    CreateThread(NULL,NULL,(LPTHREAD_START_ROUTINE)ClientConnectionThread,NULL,NULL,NULL);
+    for(int i = 0 ; i<10;i++)
+    {
+        CreateThreads(i);
+    }
+
+    //connection.run();
 }
-void Server::ClientConnectionThread()
+void Server::ClientConnectionThread::run()
 {
     SOCKET dock;
       int counter = 0;
@@ -48,9 +53,17 @@ void Server::ClientConnectionThread()
        send(serverPtr->Clients[ID].socket,(char*)&bufferLength,sizeof(int),NULL);
        send(serverPtr->Clients[ID].socket,buffer.c_str(),bufferLength,NULL);
        serverPtr->window.WriteToServerArea("MOTD sent to Client #: "+QVariant(ID).toString()+"\n");
-       CreateThread(NULL,NULL,(LPTHREAD_START_ROUTINE)ClientHandlerThread,(LPVOID)ID,NULL,NULL);
-      }
+       serverPtr->Clients[ID].isOccupied = true;
+     }
    }
+}
+Server::ClientConnectionThread::ClientConnectionThread()
+{
+
+}
+void Server::CreateThreads(int ID)
+{
+    CreateThread(NULL,NULL,(LPTHREAD_START_ROUTINE)ClientHandlerThread,(LPVOID)ID,NULL,NULL);
 }
 void Server::ClientHandlerThread(int ID)
 {
@@ -64,23 +77,27 @@ void Server::ClientHandlerThread(int ID)
         }
         if(retnCheck == SOCKET_ERROR)
         {
-            serverPtr->window.WriteToServerArea("Connection Error with Client ID: #"+QVariant(ID).toString());
-            break;
+           if(serverPtr->Clients[ID].isOccupied == true)
+            {
+              serverPtr->window.WriteToServerArea("Connection Error with Client ID: #"+QVariant(ID).toString());
+              break;
+            }
         }
-		ProcessMessage();
+        serverPtr->ProcessMessage(len,ID);
     }
     serverPtr->firstVacantID--;
     serverPtr->vacantID[serverPtr->firstVacantID] = ID;
+    serverPtr->Clients[ID].isOccupied = false;
 }
 void Server::ProcessMessage(int len, int ID)
 {
    char * message = new char[len];
-   recv(Client[ID].socket,message,len,NULL);
+   recv(serverPtr->Clients[ID].socket,message,len,NULL);
    for(int i = 0; i<10; i++)
    {
 	  if(i == ID)
 		  continue;
-	  send(Client[i].socket,(char*)&len,4,NULL);
-	  send(Client[i].socket,buffer,len,NULL);
+      send(serverPtr->Clients[i].socket,(char*)&len,4,NULL);
+      send(serverPtr->Clients[i].socket,message,len,NULL);
    }
 }

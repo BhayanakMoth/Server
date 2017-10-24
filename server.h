@@ -25,6 +25,10 @@ private:
     int sizeofaddr = sizeof(addr_in);
     int counter = 0;
     MainWindow window;
+    int vacantID[10]={0,1,2,3,4,5,6,7,8,9};
+    int vacancy = 10;
+    int lastVacantIndex = 10;
+    int firstVacantID = 0;
 };
 static Server * serverPtr;
 #endif // SERVER_H

@@ -28,22 +28,48 @@ void Server::Connect()
 void Server::ClientConnectionThread()
 {
     SOCKET dock;
-    dock = accept(serverPtr->sListen,(SOCKADDR*)&serverPtr->addr_in,&serverPtr->sizeofaddr);
-    int counter = 0;
+       int counter = 0;
     QString debug = "Entering While Loop.\n";
     serverPtr->window.WriteToServerArea(debug);
-    while(counter<10)
-    if(dock!=INVALID_SOCKET)
-     {
-       serverPtr->Clients[counter].socket = dock;
+    while(true)
+    {
+      dock = accept(serverPtr->sListen,(SOCKADDR*)&serverPtr->addr_in,&serverPtr->sizeofaddr);
+
+     if(dock!=INVALID_SOCKET)
+      {
+       if(serverPtr->firstVacantID == serverPtr->lastVacantIndex)
+           continue;
+       int ID  = serverPtr->vacantID[serverPtr->firstVacantID];
+       serverPtr->firstVacantID++;
+       serverPtr->Clients[ID].socket = dock;
        dock = INVALID_SOCKET;
        std::string buffer = "MIC CHECK! MIC CHECK! MIC CHECK!";
        int bufferLength = buffer.length();
-       send(serverPtr->Clients[counter].socket,(char*)&bufferLength,sizeof(int),NULL);
-       send(serverPtr->Clients[counter].socket,buffer.c_str(),bufferLength,NULL);
-       serverPtr->window.WriteToServerArea("MOTD sent to Client #: "+QVariant(counter).toString()+"\n");
-       serverPtr->window.update();
-       counter++;
-       serverPtr->counter++;
+       send(serverPtr->Clients[ID].socket,(char*)&bufferLength,sizeof(int),NULL);
+       send(serverPtr->Clients[ID].socket,buffer.c_str(),bufferLength,NULL);
+       serverPtr->window.WriteToServerArea("MOTD sent to Client #: "+QVariant(ID).toString()+"\n");
+       CreateThread(NULL,NULL,(LPTHREAD_START_ROUTINE)ClientHandlerThread,(LPVOID)ID,NULL,NULL);
       }
+   }
 }
+void Server::ClientHandlerThread(int ID)
+{
+    while(true)
+    {
+        char *buffer = new char[257];
+        buffer[256] = '\0';
+        int retnCheck = recv(serverPtr->Clients[ID].socket,buffer,256,NULL);
+        if(retnCheck == 0)
+        {
+            continue;
+        }
+        if(retnCheck == SOCKET_ERROR)
+        {
+            serverPtr->window.WriteToServerArea("Connection Error with Client ID: #"+QVariant(ID).toString());
+            break;
+        }
+    }
+    serverPtr->firstVacantID--;
+    serverPtr->vacantID[serverPtr->firstVacantID] = ID;
+}
+

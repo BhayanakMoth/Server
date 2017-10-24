@@ -27,16 +27,13 @@ void Server::Connect()
     {
         CreateThreads(i);
     }
-
-    //connection.run();
+    connection.start(QThread::HighestPriority);
 }
 void Server::ClientConnectionThread::run()
 {
     SOCKET dock;
       int counter = 0;
-    QString debug = "Entering While Loop.\n";
-    serverPtr->window.WriteToServerArea(debug);
-    while(true)
+       while(true)
     {
       dock = accept(serverPtr->sListen,(SOCKADDR*)&serverPtr->addr_in,&serverPtr->sizeofaddr);
 
@@ -52,7 +49,6 @@ void Server::ClientConnectionThread::run()
        int bufferLength = buffer.length();
        send(serverPtr->Clients[ID].socket,(char*)&bufferLength,sizeof(int),NULL);
        send(serverPtr->Clients[ID].socket,buffer.c_str(),bufferLength,NULL);
-       serverPtr->window.WriteToServerArea("MOTD sent to Client #: "+QVariant(ID).toString()+"\n");
        serverPtr->Clients[ID].isOccupied = true;
      }
    }

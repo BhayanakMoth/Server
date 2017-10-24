@@ -28,7 +28,7 @@ void Server::Connect()
 void Server::ClientConnectionThread()
 {
     SOCKET dock;
-       int counter = 0;
+      int counter = 0;
     QString debug = "Entering While Loop.\n";
     serverPtr->window.WriteToServerArea(debug);
     while(true)
@@ -54,11 +54,10 @@ void Server::ClientConnectionThread()
 }
 void Server::ClientHandlerThread(int ID)
 {
+	int len = 0;
     while(true)
     {
-        char *buffer = new char[257];
-        buffer[256] = '\0';
-        int retnCheck = recv(serverPtr->Clients[ID].socket,buffer,256,NULL);
+        int retnCheck = recv(serverPtr->Clients[ID].socket,(char*)&len,4,NULL);
         if(retnCheck == 0)
         {
             continue;
@@ -68,8 +67,20 @@ void Server::ClientHandlerThread(int ID)
             serverPtr->window.WriteToServerArea("Connection Error with Client ID: #"+QVariant(ID).toString());
             break;
         }
+		ProcessMessage();
     }
     serverPtr->firstVacantID--;
     serverPtr->vacantID[serverPtr->firstVacantID] = ID;
 }
-
+void Server::ProcessMessage(int len, int ID)
+{
+   char * message = new char[len];
+   recv(Client[ID].socket,message,len,NULL);
+   for(int i = 0; i<10; i++)
+   {
+	  if(i == ID)
+		  continue;
+	  send(Client[i].socket,(char*)&len,4,NULL);
+	  send(Client[i].socket,buffer,len,NULL);
+   }
+}

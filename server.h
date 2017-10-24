@@ -17,7 +17,8 @@ class Server
    void Connect();
 private:
    static void ClientConnectionThread();
-
+   static void ClientConnectionHandler();
+   void ProcessMessage(int len,int ID);
   private:
     SOCKET sListen;
     Client Clients[10];

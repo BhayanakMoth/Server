@@ -1,9 +1,17 @@
+#include <QCoreApplication>
+#include <QFile>
 #include "server.h"
-int main(int argc, char *argv[])
+int main()
 {
+    QCoreApplication a();
     std::string ip = "127.0.0.1";
-    QApplication a(argc, argv);
-    Server server(ip,1111);
-    server.Connect();
-    return a.exec();
+    int port = 1111;
+    Server chatter(ip,port);
+    chatter.Connect();
+    return 0;
 }
+
+
+/*
+
+*/
